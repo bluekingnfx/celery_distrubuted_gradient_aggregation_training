@@ -1,0 +1,10 @@
+
+vanitha_mam_breast_cancer_dataset
+.venv
+
+preprocessed
+
+__pycache__/
+*.py[cod]
+
+temp.*
