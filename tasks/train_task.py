@@ -1,18 +1,20 @@
 
 import numpy as np
-import tensorflow as tf
 
-from helpers.global_config import Config
 from celery_app import celery_app
 from helpers.model_instance_helper import ModelInstanceHelper
-from preprocessing.augment_images import augment_images,augment_pipeline_train
+from helpers.apply_tensor_transformation import applyTensorTransformation, applyTensorTransformationForX_VAL
+from helpers.global_config import Config
 
 X_train = np.load('preprocessed/x_train.npy')
 Y_train = np.load('preprocessed/y_train.npy')
 
+X_Val = np.load('preprocessed/x_val.npy')
+Y_Val = np.load('preprocessed/y_val.npy')
+
 
 @celery_app.task(celery_app = "tasks.train_task", bind=True)
-def train_task(self, start_idx,end_idx, initial_weights, epoch_number, worker_number):
+def train_task(self, start_idx,end_idx, initial_weights, epoch_number, worker_number, file_name):
     worker_name = self.request.hostname
     model = ModelInstanceHelper()()
     model = ModelInstanceHelper().set_model_weights(initial_weights, model)
@@ -20,35 +22,30 @@ def train_task(self, start_idx,end_idx, initial_weights, epoch_number, worker_nu
     x_batch = X_train[start_idx:end_idx]
     y_batch = Y_train[start_idx:end_idx]
     
-    dataset = tf.data.Dataset.from_tensor_slices((x_batch,y_batch))
-    
-    dataset = dataset.map(
-        lambda x,y: tf.py_function(
-            func = lambda img,label : augment_images(img,label, augment_pipeline_train),
-            inp = [x,y],
-            Tout=[tf.float32,tf.float32]
-        )
-    ).map(lambda img, label: (
-        tf.ensure_shape(img, list(Config.INPUT_SHAPE)),
-        tf.cast(label, tf.float32)
-    )).shuffle(200).batch(2).prefetch(1)
+    dataset = applyTensorTransformation(x_batch,y_batch)
     
     history = model.fit(
         dataset,
         epochs = 1,
-        verbose = "0"
+        verbose = "0",
     )
+    
+    X_Val_dataset, Y_Val_true = applyTensorTransformationForX_VAL(X_Val, Y_Val, batch_no=Config.TRAIN_BATCH_SIZE)
+    
+    predictions_proba = history.predict(X_Val_dataset, verbose=0).flatten()
+    
+    predictions = (predictions_proba > 0.5).astype(int)
     
     weights = ModelInstanceHelper().get_model_weights(model)
     
     return {
+        "y_val_true": Y_Val_true.tolist(),
+        Config.EPOCH: epoch_number,
+        "y_val_predictions": predictions.to_list(),
+        "y_val_predictions_proba": predictions_proba.to_list(),
         "weights": weights,
-        "loss": float(history.history['loss'][0]),
-        "accuracy": float(history.history['accuracy'][0]),
-        "recall": float(history.history['recall'][0]),
-        "auc": float(history.history['auc'][0]),
-        "precision":float(history.history['precision'][0]),
-        "epoch":  epoch_number,
         "worker_id": worker_number,
-        "worker_name": worker_name
+        "worker_name": worker_name,
+        Config.LOSS: history.history[Config.LOSS][0],
+        Config.FILE_NAME_CONVENTION: file_name,
     }

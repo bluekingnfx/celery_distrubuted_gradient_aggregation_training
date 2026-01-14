@@ -1,6 +1,6 @@
 from keras.models import Sequential
 from keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Dense, Flatten
-from keras.metrics import Precision, Recall, AUC
+from keras.metrics import Precision, Recall, AUC, F1Score
 from keras.optimizers import Adam
 import numpy as np
 
@@ -36,7 +36,7 @@ class ModelInstanceHelper:
         
         opt = Adam(learning_rate=scaled_learning_rate)
         
-        model.compile(optimizer=opt, loss='binary_crossentropy', metrics = ['accuracy', Precision(name='precision'), Recall(name='recall'), AUC(name='auc')]) # type: ignore
+        model.compile(optimizer=opt, loss='binary_crossentropy', metrics = [Config.ACCURACY, Precision(name=Config.PRECISION), Recall(name=Config.RECALL), AUC(name=Config.AUC), F1Score(name=Config.F1_SCORE)]) # type: ignore
         
         return model 
     
