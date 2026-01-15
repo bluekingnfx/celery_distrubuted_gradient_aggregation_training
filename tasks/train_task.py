@@ -16,8 +16,9 @@ Y_Val = np.load('preprocessed/y_val.npy')
 @celery_app.task(celery_app = "tasks.train_task", bind=True)
 def train_task(self, start_idx,end_idx, initial_weights, epoch_number, worker_number, file_name):
     worker_name = self.request.hostname
-    model = ModelInstanceHelper()()
-    model = ModelInstanceHelper().set_model_weights(initial_weights, model)
+    helper = ModelInstanceHelper()
+    model = helper()
+    model = helper.set_model_weights(initial_weights, model)
     
     x_batch = X_train[start_idx:end_idx]
     y_batch = Y_train[start_idx:end_idx]
@@ -32,20 +33,20 @@ def train_task(self, start_idx,end_idx, initial_weights, epoch_number, worker_nu
     
     X_Val_dataset, Y_Val_true = applyTensorTransformationForX_VAL(X_Val, Y_Val, batch_no=Config.TRAIN_BATCH_SIZE)
     
-    predictions_proba = history.predict(X_Val_dataset, verbose=0).flatten()
+    predictions_proba = model.predict(X_Val_dataset, verbose="0").flatten()
     
     predictions = (predictions_proba > 0.5).astype(int)
     
-    weights = ModelInstanceHelper().get_model_weights(model)
+    weights = helper.get_model_weights(model)
     
     return {
         "y_val_true": Y_Val_true.tolist(),
         Config.EPOCH: epoch_number,
-        "y_val_predictions": predictions.to_list(),
-        "y_val_predictions_proba": predictions_proba.to_list(),
+        "y_val_predictions": predictions.tolist(),
+        "y_val_predictions_proba": predictions_proba.tolist(),
         "weights": weights,
         "worker_id": worker_number,
         "worker_name": worker_name,
-        Config.LOSS: history.history[Config.LOSS][0],
+        Config.LOSS: float(history.history[Config.LOSS][0]),
         Config.FILE_NAME_CONVENTION: file_name,
     }

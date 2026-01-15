@@ -54,7 +54,7 @@ def aggregate_task(self, results):
         Config.RECALL: recall,
         Config.F1_SCORE: f1,
         Config.AUC: roc_auc,
-        Config.EPOCH: np.astype(results[0][Config.EPOCH], dtype=np.float32), # type: ignore
+        Config.EPOCH: results[0][Config.EPOCH], # type: ignore
         Config.FILE_NAME_CONVENTION: results[0][Config.FILE_NAME_CONVENTION],
         Config.LOSS: loss
     }
@@ -63,6 +63,6 @@ def aggregate_task(self, results):
     
     return {
         "weights": helper.get_model_weights(model),
-        "epoch": results[0][Config.EPOCH],
+        "epoch": float(results[0][Config.EPOCH]),
         "worker_name": worker_name,
     }

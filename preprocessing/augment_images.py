@@ -1,6 +1,6 @@
 
 import albumentations as A
-from tensorflow import is_tensor, convert_to_tensor, float32 as TfFloat32
+from tensorflow import is_tensor, convert_to_tensor, float32 as TfFloat32, expand_dims
 import numpy as np
 
 from helpers.global_config import Config
@@ -32,6 +32,7 @@ def augment_images(img, label, transformation):
         label = label.numpy()
         label = label.astype(np.float32)
         label = convert_to_tensor(label,TfFloat32)
+        label = expand_dims(label, axis=0)
     
     augmented_image = transformation(image=img)['image']
     
@@ -59,6 +60,7 @@ def test_augment_image(img, label, transform):
         label = label.numpy()
         label = label.astype(np.float32)
         label = convert_to_tensor(label, dtype=TfFloat32)
+        label = expand_dims(label, axis=0)
     
     augmented_img = transform(image=img)['image']
     augmented_img = convert_to_tensor(augmented_img, TfFloat32)

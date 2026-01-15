@@ -14,7 +14,7 @@ def write_to_csv(
     evaluation_metrics = False
 ):
     parent_path = Path(__file__).resolve().parent.parent
-    metrics_folder = parent_path / Config.METRICS_FOLDER / Config.TESTING_FOLDER if evaluation_metrics else parent_path / Config.METRICS_FOLDER / Config.TESTING_FOLDER
+    metrics_folder = parent_path / Config.METRICS_FOLDER / Config.TRAINING_FOLDER if evaluation_metrics == False else parent_path / Config.METRICS_FOLDER / Config.TESTING_FOLDER
     
     if metrics_folder.exists() is False:
         metrics_folder.mkdir(parents=True, exist_ok=True)
@@ -29,7 +29,7 @@ def write_to_csv(
     epoch_id = str(uuid4())
     epoch_id = f"id_{epoch_id}"
 
-    timestamp = create_file_name()
+    timestamp = create_file_name()[1:]
     
     metrics = {
         "epoch_id": epoch_id,
