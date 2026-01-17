@@ -62,7 +62,7 @@ Training deep learning models on large datasets can take hours or even days on a
 ### Prerequisites
 
 Make sure you have these installed:
-- Python 3.8+
+- Python >=3.13
 - Redis server
 - At least 8GB RAM (recommended for the breast cancer dataset)
 
@@ -84,9 +84,24 @@ source .venv/bin/activate
 ```
 
 3. **Install dependencies**
+
+**Option A: For exact reproducibility (recommended)**
+```bash
+pip install -r requirements_lock.txt
+```
+The `requirements_lock.txt` file contains all sub-dependencies with pinned versions used during development. This ensures you get the exact same environment for complete reproducibility.
+
+**Option B: For latest compatible versions**
 ```bash
 pip install -r requirements.txt
 ```
+This installs the direct dependencies and lets pip resolve the latest compatible sub-dependencies.
+
+**Option C: Upgrade existing installation**
+```bash
+pip install -r requirements.txt --upgrade
+```
+Use this to update to the latest compatible versions of all packages.
 
 4. **Start Redis server**
 ```bash
